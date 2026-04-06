@@ -9,5 +9,8 @@ data class NoteEntity(
     val id: Int = 0,
     val title: String?,
     val content: String?,
+    val tags: String,
+    val imageUri: String?,
+    val reminderAt: Long?,
     val timestamp: Long
 )

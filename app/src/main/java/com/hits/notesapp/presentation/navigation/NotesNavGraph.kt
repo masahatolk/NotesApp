@@ -43,7 +43,9 @@ fun NotesNavGraph(appContainer: AppContainer) {
                 factory = NoteEditorViewModelFactory(
                     noteId = it.arguments?.getInt(Routes.NoteIdArg),
                     getNoteByIdUseCase = appContainer.getNoteByIdUseCase,
-                    insertNoteUseCase = appContainer.insertNoteUseCase
+                    insertNoteUseCase = appContainer.insertNoteUseCase,
+                    draftStore = appContainer.draftStore,
+                    reminderScheduler = appContainer.reminderScheduler
                 )
             )
             NoteEditorScreen(viewModel = vm, onBack = { navController.popBackStack() })
@@ -54,7 +56,9 @@ fun NotesNavGraph(appContainer: AppContainer) {
                 factory = NoteEditorViewModelFactory(
                     noteId = null,
                     getNoteByIdUseCase = appContainer.getNoteByIdUseCase,
-                    insertNoteUseCase = appContainer.insertNoteUseCase
+                    insertNoteUseCase = appContainer.insertNoteUseCase,
+                    draftStore = appContainer.draftStore,
+                    reminderScheduler = appContainer.reminderScheduler
                 )
             )
             NoteEditorScreen(viewModel = vm, onBack = { navController.popBackStack() })

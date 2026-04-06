@@ -20,17 +20,35 @@ class NotesViewModel(
 ) : ViewModel() {
 
     private val searchQuery = MutableStateFlow("")
+    private val tagFilter = MutableStateFlow("")
 
     val uiState: StateFlow<NotesUiState> = combine(
         getNotesUseCase(),
-        searchQuery
-    ) { notes, query ->
-        val filtered = if (query.isBlank()) {
+        searchQuery,
+        tagFilter
+    ) { notes, query, selectedTag ->
+        val filteredByQuery = if (query.isBlank()) {
             notes
         } else {
             notes.filter { it.title?.contains(query, ignoreCase = true) ?: false }
         }
-        NotesUiState(query = query, notes = filtered)
+
+        val filtered = if (selectedTag.isBlank()) {
+            filteredByQuery
+        } else {
+            filteredByQuery.filter { note ->
+                note.tags.any { tag -> tag.equals(selectedTag, ignoreCase = true) }
+            }
+        }
+
+        val allTags = notes.flatMap { it.tags }.distinct().sorted()
+
+        NotesUiState(
+            query = query,
+            selectedTag = selectedTag,
+            availableTags = allTags,
+            notes = filtered
+        )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -39,6 +57,10 @@ class NotesViewModel(
 
     fun onSearchChanged(value: String) {
         searchQuery.update { value }
+    }
+
+    fun onTagFilterChanged(value: String) {
+        tagFilter.update { value }
     }
 
     fun deleteNote(id: Int) {
@@ -50,6 +72,8 @@ class NotesViewModel(
 
 data class NotesUiState(
     val query: String = "",
+    val selectedTag: String = "",
+    val availableTags: List<String> = emptyList(),
     val notes: List<Note> = emptyList()
 )
 

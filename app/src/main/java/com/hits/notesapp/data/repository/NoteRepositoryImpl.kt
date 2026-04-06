@@ -30,6 +30,22 @@ class NoteRepositoryImpl(
     }
 }
 
-fun NoteEntity.toDomain() = Note(id, title, content, timestamp)
+fun NoteEntity.toDomain() = Note(
+    id = id,
+    title = title,
+    content = content,
+    tags = tags.split(",").map { it.trim() }.filter { it.isNotBlank() },
+    imageUri = imageUri,
+    reminderAt = reminderAt,
+    timestamp = timestamp
+)
 
-fun Note.toEntity() = NoteEntity(id, title, content, timestamp)
+fun Note.toEntity() = NoteEntity(
+    id = id,
+    title = title,
+    content = content,
+    tags = tags.joinToString(","),
+    imageUri = imageUri,
+    reminderAt = reminderAt,
+    timestamp = timestamp
+)
