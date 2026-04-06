@@ -17,12 +17,16 @@ class NoteRepositoryImpl(
         }
     }
 
+    override suspend fun getNoteById(id: Int): Note? {
+        return dao.getNoteById(id)?.toDomain()
+    }
+
     override suspend fun insertNote(note: Note) {
         dao.insertNote(note.toEntity())
     }
 
-    override suspend fun deleteNote(note: Note) {
-        dao.deleteNote(note.toEntity())
+    override suspend fun deleteById(id: Int) {
+        dao.deleteById(id)
     }
 }
 

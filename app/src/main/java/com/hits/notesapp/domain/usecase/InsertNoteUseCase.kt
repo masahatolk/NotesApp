@@ -2,10 +2,9 @@ package com.hits.notesapp.domain.usecase
 
 import com.hits.notesapp.domain.model.Note
 import com.hits.notesapp.domain.repository.NoteRepository
-import kotlinx.coroutines.flow.Flow
 
-class GetNotesUseCase(
+class InsertNoteUseCase(
     private val repository: NoteRepository
 ) {
-    operator fun invoke(): Flow<List<Note>> = repository.getNotes()
+    suspend operator fun invoke(note: Note) = repository.insertNote(note)
 }
