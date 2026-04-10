@@ -77,6 +77,10 @@ class NoteEditorViewModel(
         }
     }
 
+    fun setReminderAt(timestamp: Long?) {
+        _uiState.update { it.copy(reminderAt = timestamp) }
+    }
+
     fun onExitWithoutSave(onBack: () -> Unit) {
         viewModelScope.launch {
             if (noteId == null) {

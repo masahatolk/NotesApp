@@ -1,5 +1,8 @@
 package com.hits.notesapp.presentation.notes.edit
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -10,8 +13,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -20,10 +27,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -34,8 +43,14 @@ fun NoteEditorScreen(
     onBack: () -> Unit
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        viewModel.onImageChanged(uri?.toString().orEmpty())
+    val context = LocalContext.current
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri ?: return@rememberLauncherForActivityResult
+        context.contentResolver.takePersistableUriPermission(
+            uri,
+            Intent.FLAG_GRANT_READ_URI_PERMISSION
+        )
+        viewModel.onImageChanged(uri.toString())
     }
 
     BackHandler {
@@ -46,6 +61,11 @@ fun NoteEditorScreen(
         TopAppBar(
             title = {
                 Text(if (state.existingId == null) "Новая заметка" else "Редактирование")
+            },
+            navigationIcon = {
+                IconButton(onClick = { viewModel.onExitWithoutSave(onBack) }) {
+                    Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
+                }
             }
         )
     }) { paddingValues ->
@@ -83,22 +103,22 @@ fun NoteEditorScreen(
 
             LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 item {
-                    Button(onClick = { imagePicker.launch("image/*") }) {
+                    Button(onClick = { imagePicker.launch(arrayOf("image/*")) }) {
                         Text("Добавить изображение")
                     }
                 }
                 item {
-                    Button(onClick = { viewModel.setReminder(1) }) {
-                        Text("Напомнить через 1 час")
+                    Button(onClick = {
+                        showReminderPicker(
+                            onDateTimeSelected = { viewModel.setReminderAt(it) },
+                            context = context
+                        )
+                    }) {
+                        Text("Выбрать дату и время")
                     }
                 }
                 item {
-                    Button(onClick = { viewModel.setReminder(24) }) {
-                        Text("Напомнить завтра")
-                    }
-                }
-                item {
-                    Button(onClick = { viewModel.setReminder(null) }) {
+                    Button(onClick = { viewModel.setReminderAt(null) }) {
                         Text("Убрать напоминание")
                     }
                 }
@@ -127,6 +147,40 @@ fun NoteEditorScreen(
             }
         }
     }
+}
+
+private fun showReminderPicker(
+    context: android.content.Context,
+    onDateTimeSelected: (Long) -> Unit
+) {
+    val now = Calendar.getInstance()
+
+    DatePickerDialog(
+        context,
+        { _, year, month, dayOfMonth ->
+            TimePickerDialog(
+                context,
+                { _, hour, minute ->
+                    val selected = Calendar.getInstance().apply {
+                        set(Calendar.YEAR, year)
+                        set(Calendar.MONTH, month)
+                        set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                        set(Calendar.HOUR_OF_DAY, hour)
+                        set(Calendar.MINUTE, minute)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }
+                    onDateTimeSelected(selected.timeInMillis)
+                },
+                now.get(Calendar.HOUR_OF_DAY),
+                now.get(Calendar.MINUTE),
+                true
+            ).show()
+        },
+        now.get(Calendar.YEAR),
+        now.get(Calendar.MONTH),
+        now.get(Calendar.DAY_OF_MONTH)
+    ).show()
 }
 
 private fun Long.asReadableDate(): String {
