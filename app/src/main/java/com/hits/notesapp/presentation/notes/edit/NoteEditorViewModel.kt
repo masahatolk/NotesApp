@@ -108,22 +108,27 @@ class NoteEditorViewModel(
         }
 
         viewModelScope.launch {
-            val note = Note(
-                id = currentState.existingId ?: 0,
-                title = currentState.title,
-                content = currentState.content,
-                tags = currentState.tags.split(",").map { it.trim() }.filter { it.isNotBlank() },
-                imageUri = currentState.imageUri.ifBlank { null },
-                reminderAt = currentState.reminderAt,
-                timestamp = System.currentTimeMillis()
-            )
+            try {
+                val note = Note(
+                    id = currentState.existingId ?: 0,
+                    title = currentState.title,
+                    content = currentState.content,
+                    tags = currentState.tags.split(",").map { it.trim() }
+                        .filter { it.isNotBlank() },
+                    imageUri = currentState.imageUri.ifBlank { null },
+                    reminderAt = currentState.reminderAt,
+                    timestamp = System.currentTimeMillis()
+                )
 
-            insertNoteUseCase(note)
-            if (noteId == null) {
-                draftStore.clearDraft()
+                insertNoteUseCase(note)
+                if (noteId == null) {
+                    draftStore.clearDraft()
+                }
+//            reminderScheduler.schedule(note)
+                onSaved()
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-            reminderScheduler.schedule(note)
-            onSaved()
         }
     }
 }

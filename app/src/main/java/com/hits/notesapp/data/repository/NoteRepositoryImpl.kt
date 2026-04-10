@@ -22,7 +22,7 @@ class NoteRepositoryImpl(
     }
 
     override suspend fun insertNote(note: Note) {
-        dao.insertNote(note.toEntity())
+        dao.upsertNote(note.toEntity())
     }
 
     override suspend fun deleteById(id: Int) {
